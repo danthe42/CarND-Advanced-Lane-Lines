@@ -47,7 +47,7 @@ The goals / steps of this project are the following:
 
 #### 1. This writeup document is a part of my github project  [here](http://github.com/danthe42/CarND-Advanced-Lane-Lines/blob/master/writeup.md). It's describing the project, the sources and the algorithm used, and includes a few images to detail them.
 
-First I would like to describe the list of source files in detail:
+First I want to detail the source files:
 
 src/cvutils.py:  Library module. This file contains a few constants and general purpose image processing methods. It's used by (almost) every source files in the repository.
 
