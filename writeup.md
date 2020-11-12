@@ -49,12 +49,17 @@ The goals / steps of this project are the following:
 
 First I would like to describe the list of source files in detail:
 
-	- src/cvutils.py  - This file contains a few constants and general purpose image processing methods. It's used by (almost) every source files in the repository.
-	- src/calibration.py       - Camera calibration codes are here
-	- src/combination.py    - A PyQT GUI application with which it's easy to  interactively play with the thresholding/kernel size parameters when combining the binary filtered images.
-	- src/lane.py     - A class representing a given lane. Here we will use a "left" and a "right" lane. Algorithms for the low-level lane detections are part of this class.
-	- src/car.py       - The class representing the car, and containing member variables which are used during processing a frame. It contains also the 2 Lane objects, the combination parameters, the camera distortion matrixes and all internal images (warped, distorted, ...).
-	- src/process_frame.py      - Continuous stream (video) processing with the whole processing pipeline implementation. 
+src/cvutils.py:  Library module. This file contains a few constants and general purpose image processing methods. It's used by (almost) every source files in the repository.
+
+src/calibration.py:  Executable. Camera calibration codes are here
+
+src/combination.py:  Executable. A PyQT GUI application with which it's easy to  interactively play with the thresholding/kernel size parameters when combining the binary filtered images.
+
+src/lane.py: Library module. A class representing a given lane. Here we will use a "left" and a "right" lane. Algorithms for the low-level lane detections are part of this class.
+
+src/car.py: Library module. The class representing the car, and containing member variables which are used during processing a frame. It contains also the 2 Lane objects, the combination parameters, the camera distortion matrixes and all internal images (warped, distorted, ...).
+
+src/process_frame.py: Executable. Continuous stream (video) processing with the whole processing pipeline implementation. 
 
 ### Camera Calibration
 
