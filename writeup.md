@@ -33,9 +33,9 @@ The goals / steps of this project are the following:
 [image3]: ./output_images/combined_test1.jpg "Binary Example"
 [image4unw]: ./output_images/unwarped_straight_lines1.jpg "Undistorted with src"
 [image4w]: ./output_images/warped_straight_lines1.jpg "Warped with dst"
-[image5]: ./examples/color_fit_lines.jpg "Fit Visual"
-[image6]: ./examples/example_output.jpg "Output"
-[video1]: ./project_video.mp4 "Video"
+[image5]: ./output_images/color_fit_lines.jpg "Fit Visual"
+[image6]: ./output_images/output_frame.jpg "Output"
+
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
 
@@ -46,6 +46,15 @@ The goals / steps of this project are the following:
 ### Writeup / README
 
 #### 1. This writeup document is a part of my github project  [here](http://github.com/danthe42/CarND-Advanced-Lane-Lines/blob/master/writeup.md). It's describing the project, the sources and the algorithm used, and includes a few images to detail them.
+
+First I would like to describe the list of source files in detail:
+
+	- src/cvutils.py  - This file contains a few constants and general purpose image processing methods. It's used by (almost) every source files in the repository.
+	- src/calibration.py       - Camera calibration codes are here
+	- src/combination.py    - A PyQT GUI application with which it's easy to  interactively play with the thresholding/kernel size parameters when combining the binary filtered images.
+	- src/lane.py     - A class representing a given lane. Here we will use a "left" and a "right" lane. Algorithms for the low-level lane detections are part of this class.
+	- src/car.py       - The class representing the car, and containing member variables which are used during processing a frame. It contains also the 2 Lane objects, the combination parameters, the camera distortion matrixes and all internal images (warped, distorted, ...).
+	- src/process_frame.py      - Continuous stream (video) processing with the whole processing pipeline implementation. 
 
 ### Camera Calibration
 
@@ -84,7 +93,9 @@ I used a combination of color and gradient thresholds to generate a binary image
 
 I made a QT application with GUI, just for this purpose: 'src/combination.py'. It's possible to examine different combinations of parameters easily with that. It is using the ParameterTree QT widget from the pyqtgraph.parametertree module, which is a very convenient and useful widget for this purpose.
 
-The combination of filter and threshold values I found to be the best for me were written to the 'pickle\combination_parameters.p' pickle file. Here's the output I got after processing the image just above.  
+The combination of filter and threshold values I found to be the best for me were written to the 'pickle\combination_parameters.p' pickle file. I'm using the Absolute Sobel detection in X and Y direction, the gradient magnitude and the S, and L channels which I get after converting the image to the HLS colormap. 
+
+Here's the output I got after processing the image just above.  
 
 ![alt text][image3]
 
@@ -116,23 +127,49 @@ This resulted in the following source and destination points:
 
 I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image.
 
+This is the reference undistorted image with the Source trapezoid drawn inside.
+
 ![alt text][image4unw]
+
+And the unwarped image with the Dst rectangle:
 
 ![alt text][image4w]
 
 #### 4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
 
-Then I did some other stuff and fit my lane lines with a 2nd order polynomial kinda like this:
+I have 2 ways to detect the lanes: 
+
+- The first method is that 
+  - First, I create a histogram of the bottom half of the binary warped image, based on the x coordinate, so I can tell the number of activated points in a column. (in the bottom half of the image) 
+  - The lanes should be somewhere around the maximum values in the histogram, the left lane on the left side of the screen, and the right lane on the right side. 
+  - Then I try to detect the lanes using a sliding window method where I split the screen to 'n' horizontal bands, and going from bottom to top, I'm placing fixed sized windows for the lanes. 
+  - The center 'x' of the window in the bottom band is determined by the histogram method previously described.
+  - The window center on the next window will be the the mean 'x' coordinate of the activated pixels in the previous window if there was enough activated lane pixels in the previous window (this number is a hardcoded value). Otherwise the position of the window will be the same as the position of the window in the previous band. 
+  - All activated pixels will be collected in an array, and at the end of this loop, a 2nd order polygon will be fitted on it with openCV's polyfit. This algorithm  will find the coefficients of the 2nd order polynomial which defines a curve where the sum of the squares of the distances of the points from the curve is the lowest. (Least squares polynomial fit)
+  - This algorithm will find the lanes correctly most of the time, but it's 
+    - Slow, because it's looking for the lanes in the whole image. 
+    - Doesn't use the results of the lane findings in the past (the previous frames). 
+  - This first method is in the file "car.py", the method's name is 'find_lanes".
+- Because of these shortcomings, I use an other method to find the lanes when I have previously detected lanes:
+  - The second method tries to "focus" the search of activated pixels around the previously detected lane curves with a predefined margin value. 
+  - If the search is unsuccessful, we fall back and use the previous valid lane coefficients (same curve) at most for a given number of frames. (Maximum in the next half second) If that time expires, we fall back to the first method of the lane finding. 
+  - This second method is in the file "car.py", the method's name is 'search_around_poly".
+
+Az an example, here is the output of the more complicated, first method where the sliding windows are green rectangles, and the blue and left pixels are considered part of the two lanes.
 
 ![alt text][image5]
 
 #### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
 
-I did this in lines # through # in my code in `my_other_file.py`
+I calculate the car position's distance from the lane center in "car.py" , method "calc_car_position" method. It will just be a very simple calculation after I have detected the lanes and if I consider the lane width to be 3.7m. (which is the standard lane width of highway lanes in the US)
+
+The radius calculation is in file "lane.py" method "setcurrentfit" which method is used when the lane curve coefficients are changed. The mathematical background of the calculation of this value from the 2nd order polynomial coefficients of the lane curve is detailed here: https://www.intmath.com/applications-differentiation/8-radius-curvature.php
 
 #### 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
 
-I implemented this step in lines # through # in my code in `yet_another_file.py` in the function `map_lane()`.  Here is an example of my result on a test image:
+I implemented this step in "process_frame.py" in the "process_frame" method. 
+
+Here is an example of my result on a test image:
 
 ![alt text][image6]
 
@@ -142,7 +179,7 @@ I implemented this step in lines # through # in my code in `yet_another_file.py`
 
 #### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (wobbly lines are ok but no catastrophic failures that would cause the car to drive off the road!).
 
-Here's a [link to my video result](./project_video.mp4)
+Here's a [link to my video result](./output_images/project_video.mp4). It's awesome, just look at it ! 
 
 ---
 
@@ -150,4 +187,17 @@ Here's a [link to my video result](./project_video.mp4)
 
 #### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+I think I've created the framework of a good, advanced lane detection method, from here it can be enhanced in many direction. A few ideas: 
+
+- The combination.py can be used to create better thresholded binary images. It takes a lot of time and effort to experiment with it, but the resulting combination rule and the thresholds can enhance the lane detection quality a lot.
+- Interestingly, from the 8 different types of binary images, few could be actually used. New types of filtered binary images could be invented. It's possible that the existing gradient/colormap channel/magnitude filters are not the most useful. In fact I had problems with these binary images during too bright light conditions, vary dark shadows with sharp border, patches of blobs in the binary image and so on. 
+- Additional test images and videos can also help to tune these threshold/combination parameters. Especially is they are taken on different road surfaces, during different weather conditions, ...
+- The difference between the last few lane polynomial coefficients ( diff member of object Lane ) could be used to detect sudden, wrong polygon fitting if the value is too big. This is a possible future improvement.
+- Different lane width values can be handled. Based on the Country where we are, based on the type of the road the car is on, and using the given country's local rules for lane widths. These can be automatically detected by the car's built-in navigation application on the head unit.
+- To reproduce failures of the detection in a continuous video stream is not too easy. It would be more convenient to use a GUI application where the developers could just pause the processing, go back to any frame and replay the processing again, with the ability to investigate all internal variables in the pipeline and the processing.
+- The pipeline is not prepared to handle cases where there are very steep curves. There are cases when one lane is not even on the camera image for a long time. How should we handle this case ? 
+- Normal, continuous lane markings can be handled. But how should we detect the interrupting and perpendicularly continuing lane curves in intersections ?  
+
+Based on this list it can be concluded that there are many possible steps to be taken in the future, if me, or somebody wants to pursue this project further.
+
+  

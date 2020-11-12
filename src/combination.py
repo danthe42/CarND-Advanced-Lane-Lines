@@ -38,6 +38,7 @@ def process_frame(dumpoutput):
     params = [
         #{'name': 'imagefile_name', 'type': 'str', 'value': 'original41.jpg'},
         {'name': 'imagefile_name', 'type': 'str', 'value': '../test_images/test1.jpg'},
+        #{'name': 'imagefile_name', 'type': 'str', 'value': '../test_images/straight_lines2.jpg'},
         {'name': 'kernel_size', 'type': 'int', 'value': 3},
         {'name': 'mag_kernel_size', 'type': 'int', 'value': 7},
         {'name': 'dir_kernel_size', 'type': 'int', 'value': 7},                 # this is not used anymore
@@ -123,7 +124,12 @@ def process_frame(dumpoutput):
     combined = cvutils.combine_images(gray_binary, gradx_binary, grady_binary, mag_binary, s_binary, l_binary) * 255
 
     if dumpoutput is True:
+        warped = cvutils.warper( undistorted,
+                                 '../output_images/unwarped_{}'.format(os.path.basename(param['imagefile_name']) ),
+                                 '../output_images/warped_{}'.format(os.path.basename(param['imagefile_name']) )
+                                 )
         plt.imsave('../output_images/combined_{}'.format(os.path.basename(param['imagefile_name'])), combined, cmap=cm.gray);
+
     else:
         t = ParameterTree()
         t.setParameters(param, showTop=True)
@@ -135,15 +141,15 @@ def process_frame(dumpoutput):
         combination_window.setLayout(layout)
         layout.addWidget(t, 0, 0, 1, 1)
 
-        pix = QtGui.QPixmap(QtGui.QImage(grayimg.data, grayimg.shape[1], grayimg.shape[0], grayimg.shape[1], QtGui.QImage.Format_Grayscale8))
         latest_binary_widget=QtGui.QLabel(latest_changed_binary_window)
+        pix = QtGui.QPixmap(QtGui.QImage(grayimg.data, grayimg.shape[1], grayimg.shape[0], grayimg.shape[1], QtGui.QImage.Format_Grayscale8))
+        latest_binary_widget.setPixmap(pix)
         latest_changed_binary_window.show()
         latest_binary_widget.setGeometry(QtCore.QRect(10, 40, pix.width(), pix.height()))
         latest_changed_binary_window.resize(pix.width()+20, pix.height()+100)
 
-        pix = QtGui.QPixmap(QtGui.QImage(combined.data, combined.shape[1], combined.shape[0], combined.shape[1], QtGui.QImage.Format_Grayscale8))
         combination_image_widget=QtGui.QLabel("")
-        combination_image_widget.setPixmap(pix)
+        combination_image_widget.setPixmap(QtGui.QPixmap(QtGui.QImage(combined.data, combined.shape[1], combined.shape[0], combined.shape[1], QtGui.QImage.Format_Grayscale8)))
         layout.addWidget(combination_image_widget, 0, 1, 1, 1)
         combination_window.show()
         combination_window.resize(1680, 768)
@@ -151,7 +157,7 @@ def process_frame(dumpoutput):
 
 if __name__ == '__main__':
 
-    dumpoutput = False              # if this is True, the test image's binary combined image output will just be written to the ../output_images/ directory as "combined_{filename}", and the application will exit.
+    dumpoutput = False               # if this is True, the test image's binary combined image output will just be written to the ../output_images/ directory as "combined_{filename}", and the application will exit.
                                     # in case of False, the QT application will start
 
     process_frame(dumpoutput)
