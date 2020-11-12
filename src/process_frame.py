@@ -14,29 +14,29 @@ import car
 def process_frame(img):
     global car
 
+    # update frame_number (for debug), clear internal states specific to frame processing
     car.newframe()
 
-    # process 1 frame
-
-    if car.debuglevel > 0:
-        plt.imsave("original" + str(car.frame_number) + ".jpg", img);
-
+    # calculate combined binary image
     car.process_frame_binary(img)
+    # warp to bird eye view
     car.warper(car.binary_image)
     if car.debuglevel > 0:
         plt.imsave("warped" + str(car.frame_number) + ".jpg", car.warped_image, cmap=cm.gray);
 
+    # the actual lane detection in this frame
     if car.left_lane.lost(car.frame_number) or car.right_lane.lost(car.frame_number):
         car.find_lanes()
     else:
         car.search_around_poly()
-    # ---------------------------
+    # calculate vehicle position from lane center
     car.calc_car_position()
-    # ---------------------------------
-    # Create an image to draw the lines on
+
+    # Create an image to draw the polygon on
     warp_zero = np.zeros_like(car.warped_image).astype(np.uint8)
     color_warp = np.dstack((warp_zero, warp_zero, warp_zero))
     # Recast the x and y points into usable format for cv2.fillPoly()
+    # draw the internal part of the lane with a green polygon combined (after warping back) with the original image
     if (car.left_lane.allx is not None) and (car.right_lane.ally is not None):
         pts_left = np.array([np.transpose(np.vstack([car.left_lane.allx, car.left_lane.ally]))])
         pts_right = np.array([np.flipud(np.transpose(np.vstack([car.right_lane.allx, car.right_lane.ally])))])
@@ -64,16 +64,12 @@ def process_frame(img):
 
 if __name__ == '__main__':
 
+    # debuglevel values: see comment before Car's constructor
     debuglevel = 0
-
     car = car.Car( debuglevel )
 
-    #if debuglevel == 1:
-    #    img = cv2.imread('original38.jpg')
-    #    process_frame(img)
-
     fname = 'project_video'
-    output_video_path = '../videos_output/{}.mp4'.format(fname)
+    output_video_path = '../output_images/{}.mp4'.format(fname)
     if car.debuglevel>0:
         f=0
         t=1

@@ -36,14 +36,17 @@ class Car():
         self.M = None
         self.Minv = None
 
+    # calculate vehicle position from lane center
     def calc_car_position(self):
         if (self.left_lane.current_fit[0] != False) & (self.right_lane.current_fit[0] != False):
             ploty = self.binary_image.shape[0]-1
+            # calc. left and right lane x coordinate in the bottom row of the image
             xl = self.left_lane.current_fit[0] * ploty ** 2 + self.left_lane.current_fit[1] * ploty + self.left_lane.current_fit[2]
             xr = self.right_lane.current_fit[0] * ploty ** 2 + self.right_lane.current_fit[1] * ploty + self.right_lane.current_fit[2]
+            # calculate distance
             self.distance_from_lane_center = self.lane_width * ( self.binary_image.shape[1] / 2 - (xl+xr) // 2 ) / (xr-xl)
 
-
+    # calculate binary combined image
     def process_frame_binary(self, camera_raw_img):
         self.undistorted_image = cvutils.undistort_image(camera_raw_img, self._calib_mtx, self._calib_dist)
         if self.debuglevel>1:
@@ -71,16 +74,14 @@ class Car():
             plt.imsave("unwarped" + str(self.frame_number) + ".jpg", self.binary_image, cmap=cm.gray);
             plt.imsave("gray" + str(self.frame_number) + ".jpg", self.gray_image, cmap=cm.gray);
 
+    # perspective transformation to bird's eye view
     def warper(self, img):
         (self.warped_image, self.M, self.Minv) = cvutils.warper(img)
 
+    # search around the lane curve which was detected recently
     # margin parameter: The width of the margin around the previous window (from the previous frame) to search
     def search_around_poly(self):
 
-        #histogram = np.sum(self.warped_image[self.warped_image.shape[0] // 2:, :], axis=0)
-        #if self.frame_number == 36:
-            #cv2.imshow('lanes{}'.format(self.frame_number), self.warped_image)
-            #print(str(histogram))
         # Grab activated pixels
         nonzero = self.warped_image.nonzero()
         nonzerox = np.array(nonzero[1])
@@ -88,6 +89,7 @@ class Car():
         self.left_lane.fit_poly_use_poly_area(nonzerox, nonzeroy, self.binary_image, self.frame_number)
         self.right_lane.fit_poly_use_poly_area(nonzerox, nonzeroy, self.binary_image, self.frame_number)
 
+    # search for lanes on the whol image using sliding windows with histogram
     def find_lanes(self, nwindows = 9, margin = 100, minpix = 50):
         binary_warped = self.warped_image
         histogram = np.sum(self.warped_image[self.warped_image.shape[0] // 2:, :], axis=0)
@@ -153,7 +155,6 @@ class Car():
                 leftx_current = int(round(np.mean(nonzerox[good_left_inds])))
             if len(good_right_inds) >= minpix:
                 rightx_current = int(round(np.mean(nonzerox[good_right_inds])))
-            ### (`right` or `leftx_current`) on their mean position ###
 
         # Concatenate the arrays of indices (previously was a list of lists of pixels)
         left_lane_inds = np.concatenate(left_lane_inds)

@@ -2,7 +2,9 @@ import numpy as np
 
 # A class representing a lane
 class Lane():
-    # constructor: laneid is the id (name) of the lane. It can be 'left', or 'right'.
+    # constructor. Create a Lane representation
+    # laneid: the id (name) of the lane. It can be 'left', or 'right'
+    # lane_width: lane width in meters
     def __init__(self, laneid, lane_width):
         self.laneid = laneid
         self.lane_width = lane_width
@@ -20,7 +22,7 @@ class Lane():
         self.too_many_activated_pixels_when_areasearch = 90.0           # percentage where there's a previously fitted polyline
         self.curverad = 0
 
-    # Have we lost this lane? If its return value is True, then we need to fall back to the histogram/sliding windows lane detection mode.
+    # Did we lost the lane? If its return value is True, then we need to fall back to the histogram/sliding windows lane detection mode.
     def lost(self, frame_num):
         if frame_num == 1:
             # first frame: there's no previous polyfit
@@ -34,6 +36,7 @@ class Lane():
         # otherwise, we could detect the lane OR we can still use the previous valid lane detection's result
         return False
 
+    # A new polynomial coefficient set was calculated. Store it internally.
     def setcurrentfit(self, newfit, binary_warped, confident, frame_num, reason = ''):
 
         if (self.detected is True) and (confident is False):
@@ -65,6 +68,7 @@ class Lane():
             self.undetected_since_frame = frame_num
         self.detected = confident
 
+    # Sliding window/histogram algorithm ending part: try to fit the lane to the given activated points is possible
     def fit_poly(self, lane_inds, nonzerox, nonzeroy, binary_warped, frame_num, margin = 50):
         if (frame_num>1) and (self.current_fit[0] != False):
             f = self.current_fit
@@ -84,6 +88,7 @@ class Lane():
         fit = np.polyfit(ypts, xpts, 2)
         self.setcurrentfit( fit, binary_warped, True, frame_num )
 
+    # Lane detection using the previously detected lane curve
     def fit_poly_use_poly_area(self, nonzerox, nonzeroy, binary_warped, frame_num, margin = 50):
         f = self.current_fit
 
