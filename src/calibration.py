@@ -44,6 +44,15 @@ def calibratecamera(dirname, outputdirname):
         undistorted = cvutils.undistort_image( img, mtx, dist )
         cv2.imwrite(outputdirname + '/undistorted_{}'.format(fname), undistorted)
 
+    return mtx, dist
+
 if __name__ == '__main__':
-    calibratecamera('../camera_cal', '../cal_image_output')
+    (mtx, dist) = calibratecamera('../camera_cal', '../cal_image_output')
     print('Calibration done, result written to file: %s'%(cvutils.calfilename))
+    imgdir = '../test_images'
+    images = os.listdir(imgdir)
+    for fname in images:
+        img = cv2.imread(imgdir+ '/' + fname)
+        undistorted = cvutils.undistort_image( img, mtx, dist )
+        cv2.imwrite('../output_images/undistorted_{}'.format(fname), undistorted)
+

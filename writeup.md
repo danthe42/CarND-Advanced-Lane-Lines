@@ -2,7 +2,15 @@
 
 ## **Advanced Lane Finding Project**
 
+Directories in of this repository:
 
+- src/: python sources, the location of the source code
+- camera_cal/: input chessboard images used for camera calibration
+- cal_image_output/: camera calibration output images
+- pickle/: serialized parameters used by the lane finding algorithm
+- examples/: Udacity examples to help with the project
+- test_images/: sample images to be used by the lane finding algorithm
+- output_images/: output directory for images and project video
 
 The goals / steps of this project are the following:
 
@@ -20,8 +28,9 @@ The goals / steps of this project are the following:
 [imagec1]: ./camera_cal/calibration2.jpg "Input"
 [imagec2]: ./cal_image_output/calibration2.jpg "Detected corners"
 [imagec3]: ./cal_image_output/undistorted_calibration2.jpg "Correctly undistorted image"
-[image2]: ./test_images/test1.jpg "Road Transformed"
-[image3]: ./examples/binary_combo_example.jpg "Binary Example"
+[image2]: ./test_images/test1.jpg "Before correction"
+[image2post]: ./output_images/undistorted_test1.jpg "After correction"
+[image3]: ./output_images/combined_test1.jpg "Binary Example"
 [image4]: ./examples/warped_straight_lines.jpg "Warp Example"
 [image5]: ./examples/color_fit_lines.jpg "Fit Visual"
 [image6]: ./examples/example_output.jpg "Output"
@@ -47,7 +56,9 @@ I start by preparing "object points", which will be the (x, y, z) coordinates of
 
 The chessboards on the calibration images are 10x7, so I wanted to detect 9*6 internal corner points. As not all these necessary corners are visible in the calibration1, 4 and 5 images, those three inputs were ignored.   
 
-I then used the output `objpoints` and `imgpoints` to compute the camera calibration and distortion coefficients using the `cv2.calibrateCamera()` function.  I applied this distortion correction to all calibration images using the `cv2.undistort()` function. All the images with the recognized corners and the undistorted chessboards are in the 'cal_image_output' directory. As an example, here is one of the input with outputs: 
+I then used the output `objpoints` and `imgpoints` to compute the camera calibration and distortion coefficients using the `cv2.calibrateCamera()` function.  I applied this distortion correction to all calibration images using the `cv2.undistort()` function. All the images with the recognized corners and the undistorted chessboards are in the 'cal_image_output' directory. The calibration output are the intrinsic matrix and the distortion coefficients. These are a property of the camera and it's lens. These values are written to the 'pickle/cal_result.p' file using the pickle python library.
+
+As an example, here is one of the input with outputs: 
 
 ![alt text][imagec1]
 
@@ -59,12 +70,20 @@ I then used the output `objpoints` and `imgpoints` to compute the camera calibra
 
 #### 1. Provide an example of a distortion-corrected image.
 
-To demonstrate this step, I will describe how I apply the distortion correction to one of the test images like this one:
+The first processing step of each images/image frames is always the correction the distortion caused by the camera. This is achived by using the distortion coefficients calculated during calibration. To prove that the calibration was correct, the undistorted test images were calculated at the end of the previous calibration step (in src/calibration.py) and written to the 'output_images/undistorted*.jpg' files.
+
+To demonstrate this step, here's a test image before, and after distortion correction:
 ![alt text][image2]
+
+![alt text][image2post]
 
 #### 2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
 
-I used a combination of color and gradient thresholds to generate a binary image (thresholding steps at lines # through # in `another_file.py`).  Here's an example of my output for this step.  (note: this is not actually from one of the test images)
+I used a combination of color and gradient thresholds to generate a binary image. The best thresholding steps were determined after investigating many different combination of HLS channels, filters with different Sobel filters, and with different Gaussian blurs. 
+
+I made a QT application with GUI, just for this purpose: 'src/combination.py'. It's possible to try different parameters easily with that, using the ParameterTree QT widget from the pyqtgraph.parametertree module, which is a very convenient and useful widget for this.
+
+The combination of filter and threshold values I found to be the best for me were written to the 'pickle\combination_parameters.p' pickle file. Here's the output I got after processing the image just above.  
 
 ![alt text][image3]
 
