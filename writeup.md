@@ -31,7 +31,8 @@ The goals / steps of this project are the following:
 [image2]: ./test_images/test1.jpg "Before correction"
 [image2post]: ./output_images/undistorted_test1.jpg "After correction"
 [image3]: ./output_images/combined_test1.jpg "Binary Example"
-[image4]: ./examples/warped_straight_lines.jpg "Warp Example"
+[image4unw]: ./output_images/unwarped_straight_lines1.jpg "Undistorted with src"
+[image4w]: ./output_images/warped_straight_lines1.jpg "Warped with dst"
 [image5]: ./examples/color_fit_lines.jpg "Fit Visual"
 [image6]: ./examples/example_output.jpg "Output"
 [video1]: ./project_video.mp4 "Video"
@@ -70,7 +71,7 @@ As an example, here is one of the input with outputs:
 
 #### 1. Provide an example of a distortion-corrected image.
 
-The first processing step of each images/image frames is always the correction the distortion caused by the camera. This is achived by using the distortion coefficients calculated during calibration. To prove that the calibration was correct, the undistorted test images were calculated at the end of the previous calibration step (in src/calibration.py) and written to the 'output_images/undistorted*.jpg' files.
+The first processing step of each images/image frames is always the correction of the distortion caused by the camera. This is achived by using the distortion coefficients calculated during calibration. To prove that the calibration was correct, the undistorted test images were calculated at the end of the previous calibration step (in src/calibration.py) and written to the 'output_images/undistorted*.jpg' files.
 
 To demonstrate this step, here's a test image before, and after distortion correction:
 ![alt text][image2]
@@ -81,7 +82,7 @@ To demonstrate this step, here's a test image before, and after distortion corre
 
 I used a combination of color and gradient thresholds to generate a binary image. The best thresholding steps were determined after investigating many different combination of HLS channels, filters with different Sobel filters, and with different Gaussian blurs. 
 
-I made a QT application with GUI, just for this purpose: 'src/combination.py'. It's possible to try different parameters easily with that, using the ParameterTree QT widget from the pyqtgraph.parametertree module, which is a very convenient and useful widget for this.
+I made a QT application with GUI, just for this purpose: 'src/combination.py'. It's possible to examine different combinations of parameters easily with that. It is using the ParameterTree QT widget from the pyqtgraph.parametertree module, which is a very convenient and useful widget for this purpose.
 
 The combination of filter and threshold values I found to be the best for me were written to the 'pickle\combination_parameters.p' pickle file. Here's the output I got after processing the image just above.  
 
@@ -89,7 +90,7 @@ The combination of filter and threshold values I found to be the best for me wer
 
 #### 3. Describe how (and identify where in your code) you performed a perspective transform and provide an example of a transformed image.
 
-The code for my perspective transform includes a function called `warper()`, which appears in lines 1 through 8 in the file `example.py` (output_images/examples/example.py) (or, for example, in the 3rd code cell of the IPython notebook).  The `warper()` function takes as inputs an image (`img`), as well as source (`src`) and destination (`dst`) points.  I chose the hardcode the source and destination points in the following manner:
+There is one more important processing step in the pipeline: Perspective transformation is necessary to transform the image so that it's seen from right above (birds eye view).  This code is in my utility module: 'src/cvutils.py' . The method name is warper(). The real calculation inside the function takes as inputs an image (`img`), as well as source (`src`) and destination (`dst`) points.  As the source and destination points mainly depends on the camera position relative to the  car, I chose to hardcode these in the following manner:
 
 ```python
 src = np.float32(
@@ -115,7 +116,9 @@ This resulted in the following source and destination points:
 
 I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image.
 
-![alt text][image4]
+![alt text][image4unw]
+
+![alt text][image4w]
 
 #### 4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
 
