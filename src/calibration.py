@@ -1,12 +1,8 @@
-import sys
 import os
 import numpy as np
-import glob
-import matplotlib.pyplot as plt
 import cv2
 import pickle
-
-calfilename = "cal_result.p"
+import cvutils
 
 def calibratecamera(dirname, outputdirname):
     objp = np.zeros((6 * 9, 3), np.float32)
@@ -41,8 +37,13 @@ def calibratecamera(dirname, outputdirname):
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, (img_w, img_h), None, None)
 
     # Serialize camera calibration results in a persistent way, to be used later
-    pickle.dump({ 'mtx': mtx, 'dist': dist }, open(calfilename, "wb"))
+    pickle.dump({ 'mtx': mtx, 'dist': dist }, open(cvutils.calfilename, "wb"))
+
+    for fname in images:
+        img = cv2.imread(dirname + '/' + fname)
+        undistorted = cvutils.undistort_image( img, mtx, dist )
+        cv2.imwrite(outputdirname + '/undistorted_{}'.format(fname), undistorted)
 
 if __name__ == '__main__':
     calibratecamera('../camera_cal', '../cal_image_output')
-    print('Calibration done, result written to file: %s'%(calfilename))
+    print('Calibration done, result written to file: %s'%(cvutils.calfilename))
