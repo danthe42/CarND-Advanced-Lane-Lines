@@ -33,7 +33,7 @@ The goals / steps of this project are the following:
 
 ### Writeup / README
 
-#### 1. This writeup document is a part of my github project  [here](http://github.com/danthe42/CarND-Advanced-Lane-Lines/blob/master/writeup_template.md). It's describing the project, the sources and the algorithm used, and includes a few images to detail them.
+#### 1. This writeup document is a part of my github project  [here](http://github.com/danthe42/CarND-Advanced-Lane-Lines/blob/master/writeup.md). It's describing the project, the sources and the algorithm used, and includes a few images to detail them.
 
 ### Camera Calibration
 
